@@ -1,0 +1,21 @@
+{
+    "cmake.sourceDirectory": "${workspaceFolder}/Assignment0",
+    "cmake.buildDirectory": "${workspaceFolder}/build/Assignment0",
+    "cmake.useCMakePresets": "never",
+    "cmake.configureOnOpen": true,
+    "cmake.configureSettings": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+        "CMAKE_BUILD_TYPE": "Debug"
+    },
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "C_Cpp.default.compileCommands": "${workspaceFolder}/build/Assignment0/compile_commands.json",
+    "C_Cpp.debugShortcut": false,
+    "code-runner.cwd": "$workspaceRoot",
+    "code-runner.executorMap": {
+        "cpp": "cmake -S Assignment0 -B build/Assignment0 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && cmake --build build/Assignment0 --target Transformation && ./build/Assignment0/Transformation"
+    },
+    "code-runner.ignoreSelection": true,
+    "code-runner.runInTerminal": true,
+    "code-runner.saveAllFilesBeforeRun": true,
+    "code-runner.showRunIconInEditorTitleMenu": true
+}

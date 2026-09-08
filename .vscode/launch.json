@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Assignment0 (CMake)",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/Assignment0/Transformation",
+            "cwd": "${workspaceFolder}/Assignment0",
+            "args": [],
+            "preLaunchTask": "CMake: build Assignment0"
+        }
+    ]
+}

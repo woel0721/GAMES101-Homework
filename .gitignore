@@ -1,0 +1,6 @@
+# Generated builds and local editor scratch files
+build/
+/Assignment0/main
+/Assignment0/Transformation
+**/tempCodeRunnerFile.cpp
+.DS_Store
