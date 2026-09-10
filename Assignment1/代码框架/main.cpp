@@ -1,8 +1,10 @@
 #include "Triangle.hpp"
 #include "rasterizer.hpp"
-#include <eigen3/Eigen/Eigen>
+#include <Eigen/Eigen>
+#include <cmath>
 #include <iostream>
 #include <opencv2/opencv.hpp>
+#include <stdexcept>
 
 constexpr double MY_PI = 3.1415926;
 
@@ -23,9 +25,11 @@ Eigen::Matrix4f get_model_matrix(float rotation_angle)
 {
     Eigen::Matrix4f model = Eigen::Matrix4f::Identity();
 
-    // TODO: Implement this function
-    // Create the model matrix for rotating the triangle around the Z axis.
-    // Then return it.
+    // 绕 Z 轴旋转，输入角度的单位是度。
+    model << cos(rotation_angle / 180 * MY_PI), -sin(rotation_angle / 180 * MY_PI), 0, 0,
+        sin(rotation_angle / 180 * MY_PI), cos(rotation_angle / 180 * MY_PI), 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1;
 
     return model;
 }
@@ -33,31 +37,78 @@ Eigen::Matrix4f get_model_matrix(float rotation_angle)
 Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio,
                                       float zNear, float zFar)
 {
-    // Students will implement this function
-
     Eigen::Matrix4f projection = Eigen::Matrix4f::Identity();
 
-    // TODO: Implement this function
-    // Create the projection matrix for the given parameters.
-    // Then return it.
+    // 先用正距离确定近平面的边界，再转换成课件使用的负 Z 坐标。
+    float half_fov = eye_fov / 2;
+    float tan_half_fov = tan(half_fov / 180 * MY_PI);
+    float top = zNear * tan_half_fov;
+    float right = top * aspect_ratio;
+    float left = -right;
+    float bottom = -top;
+    float n = -zNear;
+    float f = -zFar;
+
+    Eigen::Matrix4f ortho = Eigen::Matrix4f::Identity();
+    ortho << 2 / (right - left), 0, 0, -(right + left) / (right - left),
+        0, 2 / (top - bottom), 0, -(top + bottom) / (top - bottom),
+        0, 0, 2 / (n - f), -(n + f) / (n - f),
+        0, 0, 0, 1;
+
+    Eigen::Matrix4f persp2ortho = Eigen::Matrix4f::Identity();
+    persp2ortho << n, 0, 0, 0,
+        0, n, 0, 0,
+        0, 0, n + f, -n * f,
+        0, 0, 1, 0;
+
+    projection = ortho * persp2ortho;
 
     return projection;
 }
 
-int main(int argc, const char** argv)
+// axis 表示过原点的旋转轴方向；angle 的单位是度，正方向遵循右手定则。
+Eigen::Matrix4f get_rotation(Eigen::Vector3f axis, float angle)
+{
+    // 公式要求单位轴；零向量无法定义旋转轴。
+    float axis_length = axis.norm();
+    if (axis_length == 0.0f)
+    {
+        throw std::invalid_argument("Rotation axis must be non-zero");
+    }
+    axis /= axis_length;
+
+    float radians = angle * MY_PI / 180.0f;
+    float c = std::cos(radians);
+    float s = std::sin(radians);
+
+    // K * v = axis.cross(v)，将叉乘写成矩阵乘法。
+    Eigen::Matrix3f K;
+    K << 0, -axis.z(), axis.y(),
+        axis.z(), 0, -axis.x(),
+        -axis.y(), axis.x(), 0;
+
+    // 罗德里格斯公式：R = cos(theta) I + (1-cos(theta)) nn^T + sin(theta) K。
+    Eigen::Matrix3f R = c * Eigen::Matrix3f::Identity() + (1.0f - c) * axis * axis.transpose() + s * K;
+
+    Eigen::Matrix4f rotation = Eigen::Matrix4f::Identity();
+    rotation.block<3, 3>(0, 0) = R;
+    return rotation;
+}
+
+int main(int argc, const char **argv)
 {
     float angle = 0;
     bool command_line = false;
     std::string filename = "output.png";
 
-    if (argc >= 3) {
+    if (argc >= 3)
+    {
         command_line = true;
         angle = std::stof(argv[2]); // -r by default
-        if (argc == 4) {
+        if (argc == 4)
+        {
             filename = std::string(argv[3]);
         }
-        else
-            return 0;
     }
 
     rst::rasterizer r(700, 700);
@@ -74,7 +125,8 @@ int main(int argc, const char** argv)
     int key = 0;
     int frame_count = 0;
 
-    if (command_line) {
+    if (command_line)
+    {
         r.clear(rst::Buffers::Color | rst::Buffers::Depth);
 
         r.set_model(get_model_matrix(angle));
@@ -90,7 +142,8 @@ int main(int argc, const char** argv)
         return 0;
     }
 
-    while (key != 27) {
+    while (key != 27)
+    {
         r.clear(rst::Buffers::Color | rst::Buffers::Depth);
 
         r.set_model(get_model_matrix(angle));
@@ -106,10 +159,12 @@ int main(int argc, const char** argv)
 
         std::cout << "frame count: " << frame_count++ << '\n';
 
-        if (key == 'a') {
+        if (key == 'a')
+        {
             angle += 10;
         }
-        else if (key == 'd') {
+        else if (key == 'd')
+        {
             angle -= 10;
         }
     }
