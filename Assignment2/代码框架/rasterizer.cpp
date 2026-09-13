@@ -128,19 +128,22 @@ void rst::rasterizer::draw(pos_buf_id pos_buffer, ind_buf_id ind_buffer, col_buf
 
         rasterize_triangle(t);
 
-        //4倍采样，混合四种颜色
-        if(SSAA) {
-            for(int x = 0; x < width; ++x) {
-                for(int y = 0; y < height; ++y) {
-                    Eigen::Vector3f color = Eigen::Vector3f(0, 0, 0);
-                    for(int i = 0; i < 4; ++i) {
-                        color += color_buf_2xSSAA[(height-1-y)*width*4 + x*4 + i];
-                    }
-                    color /= 4.0;
-                    set_pixel(Eigen::Vector3f(x, y, 1), color);
-                }
+    }
+
+    if (SSAA) {
+        for (int x = 0; x < width; ++x) {
+            for (int y = 0; y < height; ++y) {
+            Eigen::Vector3f color(0, 0, 0);
+
+            for (int i = 0; i < 4; ++i) {
+                color += color_buf_2xSSAA[get_index(x, y) * 4 + i];
             }
-        }
+
+            color /= 4.0f;
+
+            set_pixel(Eigen::Vector3f(x, y, 1),color);
+         }
+        } 
     }
 }
 
