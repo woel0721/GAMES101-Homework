@@ -49,28 +49,8 @@ static bool insideTriangle(float x, float y, const Vector3f* _v)
 {   
     // TODO : Implement this function to check if the point (x, y) is inside the triangle represented by _v[0], _v[1], _v[2]
 
-    Vector3f A = _v[0];
-    Vector3f B = _v[1];
-    Vector3f C = _v[2];
-
-    Vector3f AB = B - A;
-    Vector3f BC = C - B;
-    Vector3f CA = A - C;
-
-    Vector3f P;
-    P << x, y , A[2];
-
-    Vector3f AP = P - A;
-    Vector3f BP = P - B;
-    Vector3f CP = P - C;
-
-    Vector3f AB_cross_AP = AB.cross(AP);
-    Vector3f BC_cross_BP = BC.cross(BP);
-    Vector3f CA_cross_CP = CA.cross(CP);
-
-    return AB_cross_AP.dot(BC_cross_BP)>0 && 
-            BC_cross_BP.dot(CA_cross_CP)>0 && 
-            CA_cross_CP.dot(AB_cross_AP)>0;
+   auto [c1, c2, c3] = computeBarycentric2D(x, y, _v);
+   return c1 >= 0 && c2 >= 0 && c3 >= 0;
 }
 
 static std::tuple<float, float, float> computeBarycentric2D(float x, float y, const Vector3f* v)
@@ -165,7 +145,6 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t) {
 
     for (int x = x_min; x <= x_max; ++x) {
         for (int y = y_min; y <= y_max; ++y) {
-            float min_depth = FLT_MAX;
             if(SSAA){
                 int index = 0;
                 for(float i = 0.25f; i < 1.0f; i += 0.5f) {
@@ -191,15 +170,15 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t) {
                 continue; // This pixel has been handled by the four SSAA samples.
             }
             else{
+                x = x + 0.5f;
+                y = y + 0.5f;
                 if (insideTriangle(x, y, t.v)) {
                     auto[alpha, beta, gamma] = computeBarycentric2D(x, y, t.v);
                     float w_reciprocal = 1.0/(alpha / v[0].w() + beta / v[1].w() + gamma / v[2].w());
                     float z_interpolated = alpha * v[0].z() / v[0].w() + beta * v[1].z() / v[1].w() + gamma * v[2].z() / v[2].w();
                     z_interpolated *= w_reciprocal;
-
-                    min_depth = std::min(min_depth, z_interpolated);
-                    if(min_depth < depth_buf[get_index(x, y)]) {
-                        depth_buf[get_index(x, y)] = min_depth;
+                    if(z_interpolated < depth_buf[get_index(x, y)]) {
+                        depth_buf[get_index(x, y)] = z_interpolated;
                         Eigen::Vector3f color = t.getColor();
                         set_pixel(Eigen::Vector3f(x, y, 1), color);
                     }
