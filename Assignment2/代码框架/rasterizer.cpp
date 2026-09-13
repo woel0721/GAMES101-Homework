@@ -170,15 +170,15 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t) {
                 continue; // This pixel has been handled by the four SSAA samples.
             }
             else{
-                x = x + 0.5f;
-                y = y + 0.5f;
-                if (insideTriangle(x, y, t.v)) {
-                    auto[alpha, beta, gamma] = computeBarycentric2D(x, y, t.v);
+                float sample_x = x + 0.5f;
+                float sample_y = y + 0.5f;
+                if (insideTriangle(sample_x, sample_y, t.v)) {
+                    auto[alpha, beta, gamma] = computeBarycentric2D(sample_x, sample_y, t.v);
                     float w_reciprocal = 1.0/(alpha / v[0].w() + beta / v[1].w() + gamma / v[2].w());
                     float z_interpolated = alpha * v[0].z() / v[0].w() + beta * v[1].z() / v[1].w() + gamma * v[2].z() / v[2].w();
                     z_interpolated *= w_reciprocal;
-                    if(z_interpolated < depth_buf[get_index(x, y)]) {
-                        depth_buf[get_index(x, y)] = z_interpolated;
+                    if(z_interpolated < depth_buf[get_index(sample_x, sample_y)]) {
+                        depth_buf[get_index(sample_x, sample_y)] = z_interpolated;
                         Eigen::Vector3f color = t.getColor();
                         set_pixel(Eigen::Vector3f(x, y, 1), color);
                     }
