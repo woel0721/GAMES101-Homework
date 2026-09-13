@@ -7,6 +7,7 @@
 
 constexpr double MY_PI = 3.1415926;
 
+
 Eigen::Matrix4f get_view_matrix(Eigen::Vector3f eye_pos)
 {
     Eigen::Matrix4f view = Eigen::Matrix4f::Identity();
@@ -46,7 +47,7 @@ Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio,
     Eigen::Matrix4f ortho = Eigen::Matrix4f::Identity();
     ortho << 2 / (right - left), 0, 0, -(right + left) / (right - left),
         0, 2 / (top - bottom), 0, -(top + bottom) / (top - bottom),
-        0, 0, 2 / (n - f), -(n + f) / (n - f),
+        0, 0, 2 / (f - n), -(f + n) / (f - n),
         0, 0, 0, 1;
 
     Eigen::Matrix4f persp2ortho = Eigen::Matrix4f::Identity();
