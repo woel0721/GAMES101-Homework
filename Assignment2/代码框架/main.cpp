@@ -28,10 +28,34 @@ Eigen::Matrix4f get_model_matrix(float rotation_angle)
     return model;
 }
 
-Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio, float zNear, float zFar)
+Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio,
+                                      float zNear, float zFar)
 {
-    // TODO: Copy-paste your implementation from the previous assignment.
-    Eigen::Matrix4f projection;
+    Eigen::Matrix4f projection = Eigen::Matrix4f::Identity();
+
+    // 先用正距离确定近平面的边界，再转换成课件使用的负 Z 坐标。
+    float half_fov = eye_fov / 2;
+    float tan_half_fov = tan(half_fov / 180 * MY_PI);
+    float top = zNear * tan_half_fov;
+    float right = top * aspect_ratio;
+    float left = -right;
+    float bottom = -top;
+    float n = -zNear;
+    float f = -zFar;
+
+    Eigen::Matrix4f ortho = Eigen::Matrix4f::Identity();
+    ortho << 2 / (right - left), 0, 0, -(right + left) / (right - left),
+        0, 2 / (top - bottom), 0, -(top + bottom) / (top - bottom),
+        0, 0, 2 / (n - f), -(n + f) / (n - f),
+        0, 0, 0, 1;
+
+    Eigen::Matrix4f persp2ortho = Eigen::Matrix4f::Identity();
+    persp2ortho << n, 0, 0, 0,
+        0, n, 0, 0,
+        0, 0, n + f, -n * f,
+        0, 0, 1, 0;
+
+    projection = ortho * persp2ortho;
 
     return projection;
 }
